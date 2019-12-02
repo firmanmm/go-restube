@@ -10,7 +10,8 @@ import (
 )
 
 type DownloaderController struct {
-	downloader *service.DownloaderService
+	downloader  *service.DownloaderService
+	authService *service.AuthenticationService
 }
 
 func (d *DownloaderController) HandleGetVideoInfo(ctx *gin.Context) {
@@ -71,12 +72,19 @@ func (d *DownloaderController) HandleDownload(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	sessionID := ctx.GetHeader("Authorization")
+	err = d.authService.AddByteDownloaded(sessionID, uint(len(data)))
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
 	contentType := http.DetectContentType(data)
 	ctx.Data(http.StatusOK, contentType, data)
 }
 
-func NewDownloaderController(downloader *service.DownloaderService) *DownloaderController {
+func NewDownloaderController(downloader *service.DownloaderService, authService *service.AuthenticationService) *DownloaderController {
 	instance := new(DownloaderController)
 	instance.downloader = downloader
+	instance.authService = authService
 	return instance
 }

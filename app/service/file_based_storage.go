@@ -40,8 +40,8 @@ func (f *FileBasedStorageService) Read(name string) ([]byte, error) {
 
 func (f *FileBasedStorageService) Contain(name string) (bool, error) {
 	name = f.baseDir + name
-	_, err := os.Stat(name)
-	return err != nil, err
+	fileInfo, err := os.Stat(name)
+	return fileInfo != nil, err
 }
 
 func (f *FileBasedStorageService) Write(name string, body []byte) error {

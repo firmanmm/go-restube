@@ -61,7 +61,7 @@ func (d *DownloaderService) Request(link string, mode int) (string, error) {
 	job.Link = link
 	job.Mode = mode
 	job.URL = fmt.Sprintf("%s.%s", encodedName, videoInfo.Formats[mode].Extension)
-	d.storage.Create("-" + job.URL)
+	d.storage.Create("~" + job.URL)
 	d.workQueue <- job
 	return job.URL, nil
 }
@@ -78,7 +78,7 @@ func (d *DownloaderService) Download(link string) ([]byte, error) {
 		log.Println(err.Error())
 		return nil, errors.New("Failed to request download")
 	}
-	if ok, err := d.storage.Contain("-" + link); ok {
+	if ok, err := d.storage.Contain("~" + link); ok {
 		return nil, errors.New("File is still being processed")
 	} else if err != nil {
 		log.Println(err.Error())
@@ -102,8 +102,8 @@ func (d *DownloaderService) downloaderRoutine() {
 			log.Printf("Error when downloading video, %s", err.Error())
 			continue
 		}
-		d.storage.Write("-"+job.URL, buffer.Bytes())
-		d.storage.Rename("-"+job.URL, job.URL)
+		d.storage.Write("~"+job.URL, buffer.Bytes())
+		d.storage.Rename("~"+job.URL, job.URL)
 	}
 }
 
