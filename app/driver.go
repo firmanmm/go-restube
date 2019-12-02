@@ -8,9 +8,11 @@ import (
 
 func NewRestube() *gin.Engine {
 	engine := gin.Default()
-	fileStorageService := service.NewFileStorageService("/storage")
+	fileStorageService := service.NewFileStorageService("storage")
 	downloaderService := service.NewDownloaderService(fileStorageService)
 	downloaderController := controller.NewDownloaderController(downloaderService)
-	engine.GET("/video/info", downloaderController.HandleGetVideoInfo)
+	engine.GET("/info", downloaderController.HandleGetVideoInfo)
+	engine.POST("/video", downloaderController.HandleRequest)
+	engine.GET("/video/:url", downloaderController.HandleDownload)
 	return engine
 }
