@@ -24,6 +24,11 @@ type Authentication struct {
 	ByteDownloaded uint
 }
 
+type Usage struct {
+	Username           string
+	MegaByteDownloaded uint
+}
+
 type AuthenticationService struct {
 	storage IAuthStorage
 }
@@ -45,6 +50,7 @@ func (a *AuthenticationService) NewAuthentication(username, password string) err
 	rand.Read(sessionID)
 	auth.SessionID = base64.URLEncoding.EncodeToString(sessionID)
 	if err := a.storage.Insert(auth); err != nil {
+		log.Println(err.Error())
 		return errors.New("Failed to create authentication")
 	}
 	return nil
@@ -113,6 +119,22 @@ func (a *AuthenticationService) FindBySessionID(sessionID string) (*Authenticati
 		return nil, errors.New("Authentication not found, please login!")
 	}
 	return auth, nil
+}
+
+func (a *AuthenticationService) ListAllUsage(limit, offset uint) ([]*Usage, error) {
+	authentications, err := a.storage.List(limit, offset)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, errors.New("Failed to list all usage")
+	}
+	usages := make([]*Usage, 0, len(authentications))
+	for _, val := range authentications {
+		usages = append(usages, &Usage{
+			Username:           val.Username,
+			MegaByteDownloaded: val.ByteDownloaded / 1024 / 1024,
+		})
+	}
+	return usages, nil
 }
 
 func NewAuthenticationService(storage IAuthStorage) *AuthenticationService {

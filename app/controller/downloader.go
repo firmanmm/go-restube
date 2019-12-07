@@ -17,7 +17,9 @@ type DownloaderController struct {
 func (d *DownloaderController) HandleGetVideoInfo(ctx *gin.Context) {
 	url := ctx.Query("url")
 	if len(url) < 10 {
-		ctx.String(http.StatusBadRequest, "Valid \"url\" query is required")
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Valid \"url\" query is required",
+		})
 		return
 	}
 	res, err := d.downloader.GetVideoQuality(url)
@@ -34,18 +36,24 @@ func (d *DownloaderController) HandleGetVideoInfo(ctx *gin.Context) {
 func (d *DownloaderController) HandleRequest(ctx *gin.Context) {
 	url := ctx.PostForm("url")
 	if len(url) < 10 {
-		ctx.String(http.StatusBadRequest, "Valid \"url\" post parameter is required")
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Valid \"url\" post parameter is required",
+		})
 		return
 	}
 	modeS := ctx.PostForm("mode")
 	mode := 0
 	if len(modeS) <= 0 {
-		ctx.String(http.StatusBadRequest, "Valid \"mode\" post parameter is required")
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Valid \"mode\" post parameter is required",
+		})
 		return
 	} else {
 		mode64, err := strconv.ParseInt(modeS, 10, 0)
 		if err != nil {
-			ctx.String(http.StatusBadRequest, "Failed to parse mode")
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"message": "Failed to parse mode",
+			})
 			return
 		}
 		mode = int(mode64)
@@ -64,18 +72,24 @@ func (d *DownloaderController) HandleRequest(ctx *gin.Context) {
 func (d *DownloaderController) HandleDownload(ctx *gin.Context) {
 	url := ctx.Param("url")
 	if len(url) < 10 {
-		ctx.String(http.StatusBadRequest, "Valid \"url\" parameter is required")
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Valid \"url\" parameter is required",
+		})
 		return
 	}
 	data, err := d.downloader.Download(url)
 	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
 		return
 	}
 	sessionID := ctx.GetHeader("Authorization")
 	err = d.authService.AddByteDownloaded(sessionID, uint(len(data)))
 	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": err.Error(),
+		})
 		return
 	}
 	contentType := http.DetectContentType(data)

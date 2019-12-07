@@ -71,7 +71,7 @@ func (d *DownloaderService) Download(link string) ([]byte, error) {
 		data, err := d.storage.Read(link)
 		if err != nil {
 			log.Println(err.Error())
-			return nil, errors.New("Failed to request download")
+			return nil, errors.New("Failed to get download")
 		}
 		return data, nil
 	} else if err != nil {
@@ -82,7 +82,7 @@ func (d *DownloaderService) Download(link string) ([]byte, error) {
 		return nil, errors.New("File is still being processed")
 	} else if err != nil {
 		log.Println(err.Error())
-		return nil, errors.New("Failed to request download")
+		return nil, errors.New("Failed to Request download")
 	}
 	return nil, errors.New("This file is not requested yet")
 }

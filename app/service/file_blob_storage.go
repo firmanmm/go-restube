@@ -53,7 +53,8 @@ func (f *FileBlobStorageService) Rename(from string, to string) error {
 
 func (f *FileBlobStorageService) Read(name string) ([]byte, error) {
 	blobUrl := f.container.NewBlockBlobURL(name)
-	resp, err := blobUrl.Download(nil, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+	ctx := context.Background()
+	resp, err := blobUrl.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
 	if err != nil {
 		return nil, err
 	}
@@ -69,9 +70,9 @@ func (f *FileBlobStorageService) Contain(name string) (bool, error) {
 	ctx := context.Background()
 	resp, err := blobUrl.GetProperties(ctx, azblob.BlobAccessConditions{})
 	if err != nil {
-		return false, err
+		return false, nil
 	}
-	return resp.Response().StatusCode != http.StatusOK, nil
+	return resp.Response().StatusCode == http.StatusOK, nil
 }
 
 func (f *FileBlobStorageService) Write(name string, body []byte) error {
@@ -91,15 +92,17 @@ func NewFileBlobStorageService(baseDir, accountName, accountKey string) *FileBlo
 	}
 	pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{})
 	targetUrl, err := url.Parse(
-		fmt.Sprintf("http://%s.blob.core.windows.net/youtubedl", accountName),
+		fmt.Sprintf("https://%s.blob.core.windows.net/youtubedl", accountName),
 	)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 	containerUrl := azblob.NewContainerURL(*targetUrl, pipeline)
 	ctx := context.Background()
-	if _, err := containerUrl.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone); err != nil {
-		log.Fatalln(err.Error())
+	if _, err := containerUrl.GetProperties(ctx, azblob.LeaseAccessConditions{}); err != nil {
+		if _, err := containerUrl.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone); err != nil {
+			log.Println(err.Error())
+		}
 	}
 	instance.container = containerUrl
 
